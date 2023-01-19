@@ -38,11 +38,11 @@ def profile(request, username):
     author = User.objects.get(username=username)
     post_list = Post.objects.filter(author=author)
     page_obj = get_page_obj(post_list, POSTS_COUNT, request)
-    follow = Follow.objects.filter(user=request.user, author=author)
-    if follow:
-        following = True
-    else:
-        following = False
+    following = False
+    if request.user.is_authenticated:
+        follow = Follow.objects.filter(user=request.user, author=author)
+        if follow:
+            following = True
     context = {
         'author': author,
         'post_list': post_list,
@@ -125,8 +125,11 @@ def follow_index(request):
 @login_required
 def profile_follow(request, username):
     # Подписаться на автора
-    follow = Follow(user=request.user, author=User.objects.get(username=username))
-    follow.save()
+    author = User.objects.get(username=username)
+    is_following = Follow.objects.filter(user=request.user, author=User.objects.get(username=username))
+    if request.user != author and not is_following:
+        follow = Follow(user=request.user, author=author)
+        follow.save()
     return redirect('posts:profile', username=username)
 
 
