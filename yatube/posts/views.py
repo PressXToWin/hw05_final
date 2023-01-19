@@ -127,7 +127,7 @@ def profile_follow(request, username):
     # Подписаться на автора
     follow = Follow(user=request.user, author=User.objects.get(username=username))
     follow.save()
-    return redirect('posts:follow_index')
+    return redirect('posts:profile', username=username)
 
 
 
@@ -136,5 +136,5 @@ def profile_unfollow(request, username):
     # Дизлайк, отписка
     follow = Follow.objects.filter(user=request.user, author=User.objects.get(username=username))
     follow.delete()
-    return redirect('posts:follow_index')
+    return redirect('posts:profile', username=username)
 
