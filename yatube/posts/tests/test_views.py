@@ -297,3 +297,48 @@ class PostsFilteredPagesTests(TestCase):
                     kwargs={'slug': self.wrong_group.slug})))
         page = response.context['page_obj']
         self.assertNotIn(self.post, page)
+
+
+class FollowTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='auth')
+        cls.followed_user = User.objects.create_user(username='followed')
+        cls.not_following_user = User.objects.create_user(username='not_following')
+        cls.post = Post.objects.create(
+            text='Подписка',
+            author=cls.followed_user
+        )
+
+    def setUp(self):
+        self.user = User.objects.get(username='auth')
+        self.authorized_client = Client()
+        self.authorized_client.force_login(self.user)
+
+    def test_follow(self):
+        """Проверка подписки и отписки"""
+        # Запрашиваем подписку
+        self.authorized_client.get(reverse('posts:profile_follow', kwargs={'username': self.followed_user.username}))
+        response = self.authorized_client.get(reverse('posts:profile', kwargs={'username': self.followed_user.username}))
+        # В контекст страницы профиля передаётся переменная following, если юзер подписан на автора
+        self.assertTrue(response.context['following'])
+        # Запрашиваем отписку
+        self.authorized_client.get(reverse('posts:profile_unfollow', kwargs={'username': self.followed_user.username}))
+        response = self.authorized_client.get(reverse('posts:profile', kwargs={'username': self.followed_user.username}))
+        self.assertFalse(response.context['following'])
+
+    def test_post_appearing(self):
+        """Дополнительная проверка при создании поста.
+        Убеждаемся, что пост появляется только в нужных местах."""
+        # Запрашиваем подписку
+        self.authorized_client.get(reverse('posts:profile_follow', kwargs={'username': self.followed_user.username}))
+        response = self.authorized_client.get(reverse('posts:follow_index'))
+        page = response.context['page_obj']
+        self.assertIn(self.post, page)
+        # И убеждаемся что пост не появляется там, где не надо
+        not_following_client = Client()
+        not_following_client.force_login(self.not_following_user)
+        response = not_following_client.get(reverse('posts:follow_index'))
+        page = response.context['page_obj']
+        self.assertNotIn(self.post, page)
