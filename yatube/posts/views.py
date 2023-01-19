@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import PostForm, CommentForm
-from .models import Group, Post, User, Comment
+from .models import Group, Post, User, Comment, Follow
 from .utils import get_page_obj
 from django.views.decorators.cache import cache_page
 
@@ -103,3 +103,32 @@ def add_comment(request, post_id):
         comment.post = post
         comment.save()
     return redirect('posts:post_detail', post_id=post_id)
+
+
+@login_required
+def follow_index(request):
+    post_list = Post.objects.filter(author__following__user=request.user)
+    page_obj = get_page_obj(post_list, POSTS_COUNT, request)
+    context = {
+        'title': 'Последние обновления на сайте',
+        'page_obj': page_obj,
+    }
+    return render(request, 'posts/follow.html', context)
+
+
+@login_required
+def profile_follow(request, username):
+    # Подписаться на автора
+    follow = Follow(user=request.user, author=User.objects.get(username=username))
+    follow.save()
+    return redirect('posts:follow_index')
+
+
+
+@login_required
+def profile_unfollow(request, username):
+    # Дизлайк, отписка
+    follow = Follow.objects.filter(user=request.user, author=User.objects.get(username=username))
+    follow.delete()
+    return redirect('posts:follow_index')
+
