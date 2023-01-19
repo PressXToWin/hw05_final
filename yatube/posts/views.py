@@ -38,10 +38,16 @@ def profile(request, username):
     author = User.objects.get(username=username)
     post_list = Post.objects.filter(author=author)
     page_obj = get_page_obj(post_list, POSTS_COUNT, request)
+    follow = Follow.objects.filter(user=request.user, author=author)
+    if follow:
+        following = True
+    else:
+        following = False
     context = {
         'author': author,
         'post_list': post_list,
-        'page_obj': page_obj
+        'page_obj': page_obj,
+        'following': following
     }
     return render(request, 'posts/profile.html', context)
 
