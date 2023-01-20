@@ -2,12 +2,12 @@ import shutil
 import tempfile
 
 from django import forms
-from django.contrib.auth import get_user_model
 from django.conf import settings
-from django.test import Client, TestCase, override_settings
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.urls import reverse
+from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client, TestCase, override_settings
+from django.urls import reverse
 
 from ..models import Group, Post
 
@@ -23,12 +23,12 @@ class PostsPagesTests(TestCase):
         super().setUpClass()
         cls.user = User.objects.create_user(username='auth')
         cls.small_gif = (
-             b'\x47\x49\x46\x38\x39\x61\x02\x00'
-             b'\x01\x00\x80\x00\x00\x00\x00\x00'
-             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-             b'\x0A\x00\x3B'
+            b'\x47\x49\x46\x38\x39\x61\x02\x00'
+            b'\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+            b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+            b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+            b'\x0A\x00\x3B'
         )
         cls.uploaded = SimpleUploadedFile(
             name='small.gif',
@@ -188,8 +188,8 @@ class PostsPagesTests(TestCase):
         reverses = [
             reverse('posts:index'),
             (
-                reverse('posts:profile', kwargs={'username': self.user.username})
-            ),
+                reverse('posts:profile', kwargs={
+                    'username': self.user.username})),
             (
                 reverse('posts:group_list', kwargs={'slug': self.group.slug})
             ),
@@ -202,7 +202,8 @@ class PostsPagesTests(TestCase):
             post_image_0 = first_object.image
             self.assertEqual(post_image_0, self.post.image)
         # Отдельная проверка для страницы с постом.
-        response = self.authorized_client.get(reverse('posts:post_detail', kwargs={'post_id': self.post.id}))
+        response = self.authorized_client.get(reverse(
+            'posts:post_detail', kwargs={'post_id': self.post.id}))
         post_image_0 = response.context['post'].image
         self.assertEqual(post_image_0, self.post.image)
 
@@ -306,7 +307,8 @@ class FollowTests(TestCase):
         super().setUpClass()
         cls.user = User.objects.create_user(username='auth')
         cls.followed_user = User.objects.create_user(username='followed')
-        cls.not_following_user = User.objects.create_user(username='not_following')
+        cls.not_following_user = User.objects.create_user(
+            username='not_following')
         cls.post = Post.objects.create(
             text='Подписка',
             author=cls.followed_user
@@ -320,20 +322,26 @@ class FollowTests(TestCase):
     def test_follow(self):
         """Проверка подписки и отписки"""
         # Запрашиваем подписку
-        self.authorized_client.get(reverse('posts:profile_follow', kwargs={'username': self.followed_user.username}))
-        response = self.authorized_client.get(reverse('posts:profile', kwargs={'username': self.followed_user.username}))
-        # В контекст страницы профиля передаётся переменная following, если юзер подписан на автора
+        self.authorized_client.get(reverse('posts:profile_follow', kwargs={
+            'username': self.followed_user.username}))
+        response = self.authorized_client.get(reverse(
+            'posts:profile', kwargs={'username': self.followed_user.username}))
+        # В контекст страницы профиля передаётся переменная following,
+        # если юзер подписан на автора
         self.assertTrue(response.context['following'])
         # Запрашиваем отписку
-        self.authorized_client.get(reverse('posts:profile_unfollow', kwargs={'username': self.followed_user.username}))
-        response = self.authorized_client.get(reverse('posts:profile', kwargs={'username': self.followed_user.username}))
+        self.authorized_client.get(reverse('posts:profile_unfollow', kwargs={
+            'username': self.followed_user.username}))
+        response = self.authorized_client.get(reverse(
+            'posts:profile', kwargs={'username': self.followed_user.username}))
         self.assertFalse(response.context['following'])
 
     def test_post_appearing(self):
         """Дополнительная проверка при создании поста.
         Убеждаемся, что пост появляется только в нужных местах."""
         # Запрашиваем подписку
-        self.authorized_client.get(reverse('posts:profile_follow', kwargs={'username': self.followed_user.username}))
+        self.authorized_client.get(reverse('posts:profile_follow', kwargs={
+            'username': self.followed_user.username}))
         # Убеждаемся что пост появляется там, где не надо
         response = self.authorized_client.get(reverse('posts:follow_index'))
         page = response.context['page_obj']

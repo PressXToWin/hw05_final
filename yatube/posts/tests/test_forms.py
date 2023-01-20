@@ -2,13 +2,13 @@ import shutil
 import tempfile
 
 from django.conf import settings
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from ..forms import PostForm
-from ..models import Post, Comment
+from ..models import Comment, Post
 
 User = get_user_model()
 
@@ -68,7 +68,8 @@ class PostCreateFormTests(TestCase):
         # Проверяем, увеличилось ли число постов
         self.assertEqual(Post.objects.count(), post_count + 1)
         # Проверяем, что создался пост с заданным текстом
-        self.assertTrue(Post.objects.filter(text='Тестовый текст', image='posts/small.gif').exists())
+        self.assertTrue(Post.objects.filter(
+            text='Тестовый текст', image='posts/small.gif').exists())
 
     def test_guest_try_create_post(self):
         """Проверяем, что гость не может создать пост."""
@@ -184,7 +185,7 @@ class PostCreateFormTests(TestCase):
             'text': 'Гостевой коммент'
         }
         # Отправляем POST-запрос
-        response = self.guest_client.post(
+        self.guest_client.post(
             reverse('posts:add_comment', kwargs={'post_id': post.id}),
             data=form_data,
             follow=True
@@ -192,4 +193,5 @@ class PostCreateFormTests(TestCase):
         # Проверяем, не увеличилось ли число комментов
         self.assertEqual(Comment.objects.count(), comment_count)
         # Проверяем, что не существует коммент с заданным текстом
-        self.assertFalse(Comment.objects.filter(text='Гостевой коммент').exists())
+        self.assertFalse(Comment.objects.filter(
+            text='Гостевой коммент').exists())

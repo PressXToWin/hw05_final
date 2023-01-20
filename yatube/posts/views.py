@@ -1,10 +1,10 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
-
-from .forms import PostForm, CommentForm
-from .models import Group, Post, User, Comment, Follow
-from .utils import get_page_obj
 from django.views.decorators.cache import cache_page
+
+from .forms import CommentForm, PostForm
+from .models import Comment, Follow, Group, Post, User
+from .utils import get_page_obj
 
 POSTS_COUNT = 10
 
@@ -99,6 +99,7 @@ def post_edit(request, post_id):
         form.save()
         return redirect('posts:post_detail', post_id=post_id)
 
+
 @login_required
 def add_comment(request, post_id):
     post = Post.objects.get(pk=post_id)
@@ -133,11 +134,11 @@ def profile_follow(request, username):
     return redirect('posts:profile', username=username)
 
 
-
 @login_required
 def profile_unfollow(request, username):
     # Дизлайк, отписка
-    follow = Follow.objects.filter(user=request.user, author=User.objects.get(username=username))
+    follow = Follow.objects.filter(
+        user=request.user,
+        author=User.objects.get(username=username))
     follow.delete()
     return redirect('posts:profile', username=username)
-
