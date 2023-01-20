@@ -61,7 +61,7 @@ class PostsPagesTests(TestCase):
     # Проверяем используемые шаблоны
     def test_pages_uses_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
-        # Собираем в словарь пары "имя_html_шаблона: reverse(name)"
+        # Собираем в словарь пары "страница: имя_html_шаблона"
         templates_pages_names = {
             reverse('posts:index'): 'posts/index.html',
             (
@@ -78,13 +78,14 @@ class PostsPagesTests(TestCase):
                 reverse('posts:post_edit', kwargs={'post_id': self.post.id})
             ): 'posts/create_post.html',
             reverse('posts:post_create'): 'posts/create_post.html',
+            '/unexistent-page/': 'core/404.html',
 
         }
         # Проверяем, что при обращении к name вызывается соответствующий
         # HTML-шаблон
-        for reverse_name, template in templates_pages_names.items():
-            with self.subTest(reverse_name=reverse_name):
-                response = self.authorized_client.get(reverse_name)
+        for page_name, template in templates_pages_names.items():
+            with self.subTest(page_name=page_name):
+                response = self.authorized_client.get(page_name)
                 self.assertTemplateUsed(response, template)
 
     def test_index_page_show_correct_context(self):
@@ -333,6 +334,7 @@ class FollowTests(TestCase):
         Убеждаемся, что пост появляется только в нужных местах."""
         # Запрашиваем подписку
         self.authorized_client.get(reverse('posts:profile_follow', kwargs={'username': self.followed_user.username}))
+        # Убеждаемся что пост появляется там, где не надо
         response = self.authorized_client.get(reverse('posts:follow_index'))
         page = response.context['page_obj']
         self.assertIn(self.post, page)

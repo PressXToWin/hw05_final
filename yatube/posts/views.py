@@ -116,17 +116,17 @@ def follow_index(request):
     post_list = Post.objects.filter(author__following__user=request.user)
     page_obj = get_page_obj(post_list, POSTS_COUNT, request)
     context = {
-        'title': 'Последние обновления на сайте',
+        'title': 'Лента подписок',
         'page_obj': page_obj,
     }
-    return render(request, 'posts/follow.html', context)
+    return render(request, 'posts/index.html', context)
 
 
 @login_required
 def profile_follow(request, username):
     # Подписаться на автора
     author = User.objects.get(username=username)
-    is_following = Follow.objects.filter(user=request.user, author=User.objects.get(username=username))
+    is_following = Follow.objects.filter(user=request.user, author=author)
     if request.user != author and not is_following:
         follow = Follow(user=request.user, author=author)
         follow.save()
