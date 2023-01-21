@@ -16,6 +16,15 @@ User = get_user_model()
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
 
+def decompose_first_post(response):
+    """Взяли первый пост из списка и разложили его на элементы."""
+    first_post = response.context['page_obj'][0]
+    post_text = first_post.text
+    post_author = first_post.author
+    post_group = first_post.group
+    return post_author, post_group, post_text
+
+
 @override_settings(MEDIA_ROOT=TEMP_MEDIA_ROOT)
 class PostsPagesTests(TestCase):
     @classmethod
@@ -91,15 +100,11 @@ class PostsPagesTests(TestCase):
     def test_index_page_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
         response = self.authorized_client.get(reverse('posts:index'))
-        # Взяли первый элемент из списка и проверили, что его содержание
-        # совпадает с ожидаемым
-        first_object = response.context['page_obj'][0]
-        post_text_0 = first_object.text
-        post_author_0 = first_object.author
-        post_group_0 = first_object.group
-        self.assertEqual(post_text_0, 'Текст')
-        self.assertEqual(post_author_0, User.objects.get(username='auth'))
-        self.assertEqual(post_group_0, Group.objects.get(slug='testslug'))
+        # Берём первый пост, разбираем его на элементы и сверяем с ожидаемым
+        post_author, post_group, post_text = decompose_first_post(response)
+        self.assertEqual(post_text, 'Текст')
+        self.assertEqual(post_author, User.objects.get(username='auth'))
+        self.assertEqual(post_group, Group.objects.get(slug='testslug'))
 
     def test_post_detail_pages_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
@@ -273,16 +278,14 @@ class PostsFilteredPagesTests(TestCase):
         for reverse_name in self.reverses:
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
-                # Взяли первый элемент из списка и проверили, что его
-                # содержание совпадает с ожидаемым
-                first_object = response.context['page_obj'][0]
-                post_text_0 = first_object.text
-                post_author_0 = first_object.author
-                post_group_0 = first_object.group
-                self.assertEqual(post_text_0, 'Текст')
-                self.assertEqual(post_author_0, User.objects.get(
+                # Берём первый пост, разбираем его на элементы
+                # и сверяем с ожидаемым
+                post_author, post_group, post_text = decompose_first_post(
+                    response)
+                self.assertEqual(post_text, 'Текст')
+                self.assertEqual(post_author, User.objects.get(
                     username='auth'))
-                self.assertEqual(post_group_0, Group.objects.get(
+                self.assertEqual(post_group, Group.objects.get(
                     slug='testslug'))
 
     def test_post_appears(self):
